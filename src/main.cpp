@@ -12,17 +12,23 @@
 
 #define MQTT_PUB_LIGHT1 "light1"
 #define MQTT_PUB_LIGHT2 "light2"
-
-//
+#define MQTT_PUB_ALARM "alarm"
+// lights
 const int light1Pin = 5;
 int currentLight1Value = LOW;
 int lastLight1Value = HIGH;
 const int light2Pin = 4;
 int currentLight2Value = LOW;
 int lastLight2Value = HIGH;
-//
+//light status strings
 String light1Status = "off";
 String light2Status = "off"; 
+//alarm
+const int alarmPin = 14;
+int currentAlarmValue = LOW;
+int lastAlarmValue = HIGH;
+//alarm status string
+String alarmStatus = "off";
 AsyncMqttClient mqttClient;
 Ticker mqttReconnectTimer;
 
@@ -133,6 +139,7 @@ void setup()
   // lastLight1Value = digitalRead(light1Pin);
   pinMode(light2Pin, INPUT);
   // lastLight2Value = digitalRead(light2Pin);
+  pinMode(alarmPin, INPUT);
   wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
 
@@ -151,6 +158,7 @@ void loop()
 {
   currentLight1Value = digitalRead(light1Pin);
   currentLight2Value = digitalRead(light2Pin);
+  currentAlarmValue =digitalRead(alarmPin);
   if(currentLight1Value == LOW && lastLight1Value == HIGH){
     if(light1Status == "off"){
       light1Status = "on";
@@ -179,4 +187,18 @@ void loop()
     Serial.println(packetIdPubLight2);
   }
   lastLight2Value = currentLight2Value;
+  if(currentAlarmValue == LOW && lastAlarmValue == HIGH){
+    if(alarmStatus == "off"){
+      alarmStatus = "on";
+    }
+    else{
+      alarmStatus = "off";
+    }
+    Serial.print("alarm is turned ");
+    Serial.println(alarmStatus);
+    uint16_t packetIdPubAlarm = mqttClient.publish(MQTT_PUB_ALARM, 1, true, alarmStatus.c_str());
+    Serial.print("Publishing at QoS 1, packetId: ");
+    Serial.println(packetIdPubAlarm);
+  }
+  lastAlarmValue = currentAlarmValue;
 }
